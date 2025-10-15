@@ -30,7 +30,7 @@ We analyze serial CT scans from a (simulated) COVID-19 patient to see how infect
 
 ### Team Roles
 
-- **Jamie** — GitHub management and connecting different program components.
+- **James** — GitHub management and connecting different program components.
 - **Carter Yang** — Front-end visualization (showing segmented and registered results).
 - **Sani Hasan** — Base programming for segmentation/registration.
 - **Daniel Lee** — Base programming for segmentation/registration and testing.
