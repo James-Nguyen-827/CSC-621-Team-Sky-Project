@@ -1,0 +1,75 @@
+# ==========================================================
+#  Covid-CT Pipeline Configuration
+#  Default settings for preprocessing, segmentation,
+#  registration, quantification, and visualization.
+# ==========================================================
+
+paths:
+  # Input (DICOM) and output folders
+  dicom_root: "data/raw_dicom"
+  out_root: "data/processed"
+
+# ----------------------------------------------------------
+# Preprocessing
+# ----------------------------------------------------------
+preprocess:
+  # Target voxel spacing (in millimeters)
+  target_spacing: [1.25, 1.25, 1.25]
+
+  # Clip Hounsfield Units to this range before normalization
+  # (approximate lung window)
+  clip_hu: [-1000, 400]
+
+  # Apply z-score normalization after clipping
+  zscore: true
+
+# ----------------------------------------------------------
+# Segmentation
+# ----------------------------------------------------------
+segmentation:
+  region_growing:
+    # Auto-seeding if empty
+    seeds: []
+
+    # HU range for air / lung tissue
+    lower: -950
+    upper: -500
+
+  levelset:
+    # Infection refinement via Geodesic Active Contour
+    iterations: 120
+    curvature: 0.5
+    propagation: 1.0
+    advection: 1.0
+
+# ----------------------------------------------------------
+# Registration
+# ----------------------------------------------------------
+registration:
+  rigid:
+    # Rigid alignment using mutual information
+    sampling_pct: 0.2
+    learning_rate: 1.0
+    iterations: 200
+
+  bspline:
+    # Deformable registration with B-spline grid
+    grid: [8, 8, 8]
+    iterations: 100
+
+# ----------------------------------------------------------
+# Quantification
+# ----------------------------------------------------------
+quantification:
+  # Ignore very small infection components (in voxels)
+  min_lesion_cc: 50
+
+# ----------------------------------------------------------
+# Visualization
+# ----------------------------------------------------------
+visualization:
+  # Slice index for QC overlay (0 = middle slice)
+  qc_slice_index: 0
+
+  # Save overlay PNGs automatically
+  save_overlay: true
