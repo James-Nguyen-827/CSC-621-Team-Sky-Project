@@ -1,7 +1,7 @@
 # covid_ct/registration/rigid_mi.py
 import SimpleITK as sitk
 
-def rigid_mi(
+def rigid_register_mi(
     fixed,
     moving,
     sampling=0.2,
