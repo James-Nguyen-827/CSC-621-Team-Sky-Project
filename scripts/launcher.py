@@ -9,10 +9,12 @@ def run_reg():        os.system(f'"{sys.executable}" -m scripts.register_pair')
 def run_quant():      os.system(f'"{sys.executable}" -m scripts.quant_only')
 def run_batch():      os.system(f'"{sys.executable}" -m scripts.batch_gui')
 def run_compare():    os.system(f'"{sys.executable}" -m scripts.comparator')
+def run_vtk_viewer(): os.system(f'"{sys.executable}" scripts/vtk_viewer.py')
+def run_matplotlib_viewer(): os.system(f'"{sys.executable}" scripts/matplotlib_viewer.py')
 
 def main():
     root = tk.Tk(); root.title("Covid-CT Toolkit")
-    root.geometry("360x260"); root.resizable(False, False)
+    root.geometry("360x330"); root.resizable(False, False)
 
     ttk.Label(root, text="Select an operation:", font=("Segoe UI", 11, "bold")).pack(pady=12)
 
@@ -21,7 +23,9 @@ def main():
         ("Registration (pair)",         run_reg),
         ("Quantification (single case)",run_quant),
         ("Batch processing (dataset)",  run_batch),
-        ("Viewer / Comparator",         run_compare),
+        ("Viewer (Matplotlib - recommended)", run_matplotlib_viewer),
+        ("VTK Viewer (if GPU works)",   run_vtk_viewer),
+        ("Viewer / Comparator (legacy)", run_compare),
     ]:
         ttk.Button(root, text=text, command=fn).pack(fill="x", padx=16, pady=6)
 
