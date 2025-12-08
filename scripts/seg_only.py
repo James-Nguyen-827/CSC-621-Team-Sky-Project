@@ -62,7 +62,7 @@ def save_overlay(image, lung, inf, out_png, z=None):
 def clean_infection_mask_size_only(infection_mask, min_cc_vox=30):
     """
     Simple CC cleanup: drop tiny blobs, keep everything else.
-    This is your plain 'threshold + morphology' method.
+    This stays in the 'fixed threshold + morphology' family.
     """
     cc = sitk.ConnectedComponent(infection_mask)
     stats = sitk.LabelShapeStatisticsImageFilter()
@@ -88,10 +88,11 @@ def run_once(dicom_dir: str, out_dir: str):
     img_raw = read_dicom_series(dicom_dir)          # HU
     img_clip = sitk.Clamp(img_raw, sitk.sitkFloat32, -1000, 400)
     img_r = resample_isotropic(img_clip, (1.25, 1.25, 1.25))
-    # keep normalized image around for other experiments, but NOT used here
+
+    # Normalized image (z-score after clipping); still just a global transform
     img_n = clip_and_norm(img_r, -1000, 400, zscore=True)
 
-    # 2) Manual / auto seeds → region growing lungs (manual is still king in this script)
+    # 2) Manual / auto seeds → region growing lungs
     from covid_ct.segmentation.auto_seed import auto_lung_seeds, manual_lung_seeds
 
     FORCE_MANUAL_SEEDS = True  # set False if you want auto seeding
@@ -104,22 +105,36 @@ def run_once(dicom_dir: str, out_dir: str):
 
     lung = lung_mask_region_growing(img_r, seeds, lower=-950, upper=-500)
 
-    # 3) Dilated lung support (include pleural-based consolidation, but stay in chest and not  go on a walk outside the body)
+    # 3) Dilated lung support (include pleural-based consolidation, but don't leave chest)
     lung_support = sitk.BinaryDilate(lung, [3, 3, 3])
 
-    # 4) HU threshold INSIDE lung_support → infection_init 3 more hours of  despair here
-    #    Normal parenchyma is very low HU; infection/consolidation is "warmer".
+    # ------------------------------------------------------------------
+    # 4) Fixed-threshold infection detection inside lung_support
+    #    No adaptive delta; just learned constants from your experiments.
+    # ------------------------------------------------------------------
+
+    # a) HU band: denser than normal air-filled lung, but not bone
     infection_hu = sitk.BinaryThreshold(
         img_r,
-        lowerThreshold=-750,   # everything denser than this is suspicious
-        upperThreshold=400     # ignore bone/very dense stuff
+        lowerThreshold=-750,   # suspicious if denser than this
+        upperThreshold=250     # cut off bone / very dense stuff
     )
-    infection_init = infection_hu & lung_support
+
+    # b) Global normalized threshold: "brighter than average lung"
+    #    This is still a fixed value, not local/adaptive per voxel.
+    infection_norm = sitk.BinaryThreshold(
+        img_n,
+        lowerThreshold=0.3,    # tweak 0.2–0.5 if needed
+        upperThreshold=10.0
+    )
+
+    # c) Restrict to lung_support
+    infection_init = infection_hu & infection_norm & lung_support
 
     # save for debugging / slides
     write_nifti(infection_init, out / "mask_infection_init.nii.gz")
 
-    # 5) Morphological smoothing + keep only meaningful lesions
+    # 5) Morphology + CC cleanup
     infection = sitk.BinaryMorphologicalClosing(infection_init, [1, 1, 1])
     infection = sitk.BinaryFillhole(infection, True, 2)
     infection = clean_infection_mask_size_only(infection, min_cc_vox=30)
