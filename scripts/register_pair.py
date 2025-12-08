@@ -8,7 +8,7 @@ import SimpleITK as sitk
 # allow "python register_pair.py" to import project code
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from covid_ct.io.dicom import read_dicom_series, write_nifti
-from covid_ct.registration.rigid_mi import rigid_register_mi
+from covid_ct.registration.rigid_mi import rigid_mi 
 from covid_ct.registration.bspline import bspline_deformable
 
 def pick_folder(title):
@@ -26,10 +26,14 @@ def pick_out_dir(default_name="registered"):
 def run_once(fixed_dir, moving_dir, out_dir, do_bspline=False):
     fixed  = read_dicom_series(fixed_dir)
     moving = read_dicom_series(moving_dir)
+    
+    # Cast to Float32 for registration (SimpleITK registration requires Float32)
+    fixed = sitk.Cast(fixed, sitk.sitkFloat32)
+    moving = sitk.Cast(moving, sitk.sitkFloat32)
 
     # 1) Rigid
     print("Running rigid registration (MI)…")
-    moved_rigid, rigid_tx = rigid_register_mi(fixed, moving, iters=200)
+    moved_rigid, rigid_tx = rigid_mi(fixed, moving, iters=200)
     write_nifti(moved_rigid, Path(out_dir)/"moving_rigid.nii.gz")
     sitk.WriteTransform(rigid_tx, str(Path(out_dir)/"rigid.tfm"))
 
