@@ -57,3 +57,42 @@ def auto_lung_seeds(img, air_hu=-700, min_cc_vox=1500):
                  [min(mid[0]+25, sz[0]-1), mid[1], mid[2]]]
 
     return [list(map(int, s)) for s in seeds]
+
+# --- manual seeding helpers (append to auto_seed.py) ---
+import matplotlib.pyplot as plt
+
+def _pick_clicks_on_slice(img, z_index, num_points=2, title="Click inside each lung, then close"):
+    """Show one axial slice and collect N mouse clicks (x,y)."""
+    arr = sitk.GetArrayFromImage(img)  # [z,y,x]
+    z_index = max(0, min(z_index, arr.shape[0]-1))
+    sl = arr[z_index, :, :]
+
+    plt.figure(figsize=(6,6))
+    plt.imshow(sl, cmap="gray")
+    plt.title(title)
+    plt.axis("off")
+    pts = plt.ginput(num_points, timeout=0)  # returns [(x,y), ...]
+    plt.close()
+
+    # convert to index [x,y,z]
+    seeds = [[int(x), int(y), int(z_index)] for (x, y) in pts]
+    return seeds
+
+def manual_lung_seeds(img, num_points=2, z=None):
+    """
+    Pick seeds manually on an axial slice.
+    - img: SimpleITK image (preferably preprocessed/resampled)
+    - num_points: how many seeds to collect (2 = typical: left/right)
+    - z: which axial slice (None -> middle)
+    Returns: list[[x,y,z], ...]
+    """
+    if z is None:
+        z = img.GetSize()[2] // 2
+    seeds = _pick_clicks_on_slice(img, z, num_points=num_points)
+    if not seeds:
+        # fallback to center-left/right so the pipeline still runs
+        sz = img.GetSize()
+        mid = [sz[0]//2, sz[1]//2, z]
+        seeds = [[max(mid[0]-25,0), mid[1], mid[2]],
+                 [min(mid[0]+25, sz[0]-1), mid[1], mid[2]]]
+    return seeds
