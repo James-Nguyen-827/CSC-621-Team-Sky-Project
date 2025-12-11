@@ -30,7 +30,7 @@ We analyze serial CT scans from a (simulated) COVID-19 patient to see how infect
 
 ### Team Roles
 
-- **James** — Managed the GitHub repository, integrated program modules, and developed the quantification pipeline.
+- **James Nguyen** — Managed the GitHub repository, integrated program modules, and developed the quantification pipeline.
 - **Carter Yang** — Developed the front-end visualization interface for segmented and registered CT outputs, and assisted in the image registration workflow.
 - **Sani Hasan** — Implemented the core codebase for segmentation and registration, and developed the 3D reconstruction pipeline.
 - **Daniel Lee** — Performed data preprocessing and conducted thorough debugging to ensure system stability and accuracy. 
